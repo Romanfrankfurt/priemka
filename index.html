@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B5FA6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Приёмка авто</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: одна колонка для телефона. Шаги 1-4 идут друг за другом, внизу закреплена панель с отправкой. */
+:root {
+  --bg: #EDF0F3; --surface: #FFFFFF; --surface2: #E2E7EC; --ink: #13202B; --muted: #566472;
+  --line: #C3CCD5; --accent: #1B5FA6; --accent-ink: #FFFFFF; --zone: #F7F9FB;
+  --s0: #F0C24B; --s1: #EE8F3A; --s2: #D9453B; --ok: #2E7D4F; --bad: #C23B30; --shadow: rgba(19,32,43,.18);
+  --font-display: 'Barlow Semi Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E151C; --surface: #17212B; --surface2: #202C38; --ink: #E7EDF2; --muted: #93A1AE;
+    --line: #324252; --accent: #6FAAEA; --accent-ink: #0B1722; --zone: #1D2933;
+    --s0: #D9AE3F; --s1: #E0803A; --s2: #E4584D; --ok: #5DBB82; --bad: #F0766B; --shadow: rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E151C; --surface: #17212B; --surface2: #202C38; --ink: #E7EDF2; --muted: #93A1AE;
+  --line: #324252; --accent: #6FAAEA; --accent-ink: #0B1722; --zone: #1D2933;
+  --s0: #D9AE3F; --s1: #E0803A; --s2: #E4584D; --ok: #5DBB82; --bad: #F0766B; --shadow: rgba(0,0,0,.5);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--font-body); -webkit-text-size-adjust: 100%; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.wrap { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 130px; display: grid; gap: 0; }
+.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+h1 { font: 700 30px/1 var(--font-display); letter-spacing: .01em; text-transform: uppercase; margin: 0; }
+.stamp { font: 500 12px var(--font-mono); color: var(--muted); margin-top: 6px; }
+.linkbtn { background: none; border: 0; padding: 8px 0; color: var(--accent); font-weight: 600; }
+
+.banner { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font-size: 13px; color: var(--muted); }
+.banner.warn { color: var(--ink); border-color: var(--s1); }
+
+.sec { margin-top: 30px; display: grid; gap: 12px; }
+h2 { font: 600 21px/1.1 var(--font-display); text-transform: uppercase; letter-spacing: .03em; margin: 0; display: flex; align-items: center; gap: 10px; }
+h2 .n { font: 500 13px var(--font-mono); background: var(--ink); color: var(--bg); width: 24px; height: 24px; display: grid; place-items: center; border-radius: 4px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+
+.field { display: grid; gap: 5px; min-width: 0; }
+.field > span, .lbl { font: 600 12px var(--font-display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+input[type="text"], input[type="tel"], textarea {
+  width: 100%; min-height: 46px; padding: 10px 12px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px;
+}
+textarea { min-height: 88px; resize: vertical; }
+input.mono { font-family: var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row2 > * { min-width: 0; }
+
+.btn { min-height: 46px; padding: 10px 16px; border-radius: 8px; border: 1.5px solid var(--ink); background: var(--surface); font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.small { min-height: 38px; padding: 6px 12px; font-size: 14px; }
+
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { position: relative; aspect-ratio: 4 / 3; border: 2px dashed var(--line); border-radius: 10px; background: var(--surface); display: grid; place-items: center; overflow: hidden; padding: 0; text-align: center; max-width: 100%; }
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile .cap { position: relative; font: 600 13px var(--font-display); text-transform: uppercase; letter-spacing: .06em; padding: 6px 10px; }
+.tile.has .cap { background: var(--surface); border-radius: 6px; margin-top: auto; margin-bottom: 8px; }
+.tile.has { border-style: solid; border-color: var(--ink); }
+
+.chip-line { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 42px; padding: 8px 14px; border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; font-weight: 500; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip.s0[aria-pressed="true"] { background: var(--s0); border-color: var(--s0); color: #13202B; }
+.chip.s1[aria-pressed="true"] { background: var(--s1); border-color: var(--s1); color: #13202B; }
+.chip.s2[aria-pressed="true"] { background: var(--s2); border-color: var(--s2); color: #fff; }
+
+.carbox { border: 1.5px solid var(--ink); background: var(--surface); border-radius: 10px; padding: 12px; display: grid; gap: 4px; }
+.carbox .nm { font: 600 17px/1.2 var(--font-display); }
+.carbox .meta { color: var(--muted); font-size: 13px; }
+.cands { display: grid; gap: 8px; }
+.cand { text-align: left; width: 100%; min-height: 48px; padding: 10px 12px; border: 1.5px solid var(--line); background: var(--surface); border-radius: 8px; display: grid; gap: 2px; }
+.cand .l { color: var(--muted); font-size: 12px; }
+.picker { display: grid; gap: 8px; }
+
+.diagram { background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px; }
+.diagram svg { display: block; width: 100%; max-width: 330px; height: auto; margin-inline: auto; touch-action: manipulation; }
+.zone { fill: var(--zone); stroke: var(--muted); stroke-width: 1.4; cursor: pointer; transition: fill .12s; }
+.zone:hover { stroke: var(--accent); stroke-width: 2.5; }
+.zone[data-sev="0"] { fill: var(--s0); }
+.zone[data-sev="1"] { fill: var(--s1); }
+.zone[data-sev="2"] { fill: var(--s2); }
+.zone:focus-visible { outline: none; stroke: var(--accent); stroke-width: 3; }
+.axis { font: 600 11px var(--font-display); letter-spacing: .12em; fill: var(--muted); text-anchor: middle; }
+.mk circle { fill: var(--ink); stroke: var(--bg); stroke-width: 1.5; }
+.mk text { fill: var(--bg); font: 600 10px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); justify-content: center; margin-top: 8px; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+.dlist { display: grid; gap: 8px; }
+.dmg { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; padding: 10px; }
+.dmg .no { font: 600 12px var(--font-mono); background: var(--ink); color: var(--bg); width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; }
+.dmg .tt { font-weight: 600; }
+.dmg .sub { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.dmg img { grid-column: 2 / 4; width: 120px; border-radius: 6px; margin-top: 4px; }
+.sevdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.x { background: none; border: 0; font-size: 22px; line-height: 1; width: 40px; height: 40px; color: var(--muted); }
+
+.group { background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 4px 12px 8px; display: grid; }
+.group h3 { font: 600 13px var(--font-display); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 10px 0 2px; }
+.crow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.crow:first-of-type { border-top: 0; }
+.yn { display: flex; gap: 6px; }
+.yn button { min-width: 52px; min-height: 40px; border: 1.5px solid var(--line); background: var(--surface); border-radius: 8px; font-weight: 600; }
+.yn button[aria-pressed="true"].y { background: var(--ok); border-color: var(--ok); color: #fff; }
+.yn button[aria-pressed="true"].n { background: var(--bad); border-color: var(--bad); color: #fff; }
+
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1.5px solid var(--ink); padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); }
+.bar .in { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+.bar .sum { flex: 1; min-width: 0; font-size: 13px; }
+.bar .sum b { display: block; font: 600 15px var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar .sum span { color: var(--muted); }
+
+#scrim { position: fixed; inset: 0; background: rgba(8,14,20,.55); z-index: 30; }
+#sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-radius: 16px 16px 0 0; max-height: 88%; display: flex; flex-direction: column; padding-top: 8px; box-shadow: 0 -8px 30px var(--shadow); }
+#sheet .inner { max-width: 560px; width: 100%; margin: 0 auto; padding: 0 16px 14px; display: grid; gap: 14px; overflow-y: auto; flex: 1 1 auto; min-height: 0; align-content: start; -webkit-overflow-scrolling: touch; }
+#sheet .foot { flex: none; border-top: 1.5px solid var(--line); padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+#sheet .foot > div { max-width: 560px; margin: 0 auto; display: grid; gap: 8px; }
+details summary { cursor: pointer; font-weight: 600; min-height: 36px; display: flex; align-items: center; }
+.grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 6px; }
+#sheet h3.t { font: 700 22px/1.1 var(--font-display); text-transform: uppercase; margin: 0; }
+.acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.acts .btn { flex: 1; min-width: 120px; }
+.thumbrow { display: flex; align-items: center; gap: 10px; }
+.thumbrow img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; }
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 50; max-width: 528px; margin: 0 auto; background: var(--ink); color: var(--bg); padding: 12px 14px; border-radius: 10px; font-weight: 500; }
+.err { color: var(--bad); font-size: 14px; margin: 0; }
+.ok { color: var(--ok); font-weight: 600; }
+a.btn { display: inline-grid; place-items: center; text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Отчёт для PDF: всегда светлый, вне экрана */
+#report { position: absolute; left: -10000px; top: 0; width: 714px; background: #fff; color: #13202B; font-family: 'IBM Plex Sans', Arial, sans-serif; font-size: 14px; line-height: 1.4; }
+#report .rb { background: #fff; padding: 8px 0; }
+#report .rt { font: 700 30px 'Barlow Semi Condensed', Arial, sans-serif; text-transform: uppercase; }
+#report .rs { color: #566472; margin-bottom: 8px; }
+#report table { border-collapse: collapse; width: 100%; }
+#report td { padding: 4px 8px 4px 0; vertical-align: top; border-top: 1px solid #D5DBE1; }
+#report td:first-child { color: #566472; width: 150px; }
+#report h4 { margin: 0 0 6px; font: 600 16px 'Barlow Semi Condensed', Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; }
+#report .rd { display: flex; gap: 12px; border: 1px solid #C3CCD5; border-radius: 8px; padding: 10px; }
+#report .rd .no { flex: none; width: 26px; height: 26px; border-radius: 50%; background: #13202B; color: #fff; text-align: center; line-height: 26px; font-size: 12px; }
+#report .rd img { width: 230px; border-radius: 6px; display: block; margin-top: 6px; }
+#report .two { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; }
+</style>
+</head><body>
+
+<main class="wrap">
+  <header class="top">
+    <div>
+      <h1>Приёмка авто</h1>
+      <div class="stamp" id="stamp"></div>
+    </div>
+    <button class="linkbtn" id="btnNew" type="button">Новая приёмка</button>
+  </header>
+  <div id="banners"></div>
+
+  <section class="sec" aria-labelledby="h-car">
+    <h2 id="h-car"><span class="n">1</span>Автомобиль</h2>
+    <label class="field"><span>Кто осматривает</span>
+      <input type="text" id="employee" list="staff" autocomplete="off" placeholder="Имя сотрудника">
+      <datalist id="staff"></datalist>
+    </label>
+    <div id="ocr" hidden>
+      <p class="hint">Сфотографируйте номер кузова (VIN) и номерной знак. Приложение прочитает их и найдёт карточку в Trello.</p>
+      <div class="tiles" style="margin-top:10px">
+        <button class="tile" id="tileVin" type="button"><span class="cap">Номер кузова</span></button>
+        <button class="tile" id="tilePlate" type="button"><span class="cap">Номерной знак</span></button>
+      </div>
+      <input type="file" id="fileVin" accept="image/*" capture="environment" hidden>
+      <input type="file" id="filePlate" accept="image/*" capture="environment" hidden>
+      <div style="margin-top:10px"><button class="btn primary" id="btnRead" type="button" disabled style="width:100%">Распознать по фото</button></div>
+      <p class="err" id="ocrErr" hidden></p>
+    </div>
+    <div class="row2">
+      <label class="field"><span>VIN</span><input class="mono" type="text" id="vin" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="17 символов"></label>
+      <label class="field"><span>Номер</span><input class="mono" type="text" id="plate" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Например 2ASP989"></label>
+    </div>
+    <div class="acts">
+      <button class="btn" id="btnFind" type="button">Найти карточку</button>
+      <button class="btn" id="btnPick" type="button">Выбрать из списка</button>
+    </div>
+    <div id="carArea"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-body">
+    <h2 id="h-body"><span class="n">2</span>Осмотр кузова</h2>
+    <p class="hint">Нажмите на деталь, где есть повреждение. Одна деталь может иметь несколько повреждений.</p>
+    <div class="diagram">
+      <div id="diagram"></div>
+      <div class="legend"><span><i style="background:var(--s0)"></i>лёгкое</span><span><i style="background:var(--s1)"></i>среднее</span><span><i style="background:var(--s2)"></i>сильное</span></div>
+    </div>
+    <div class="dlist" id="dlist"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-state">
+    <h2 id="h-state"><span class="n">3</span>Состояние и комплект</h2>
+    <div class="row2">
+      <label class="field"><span>Пробег, км</span><input type="tel" inputmode="numeric" id="mileage" autocomplete="off" placeholder="например 164260"></label>
+      <div class="field"><span>Ключи</span><div class="chip-line" id="keys"></div></div>
+    </div>
+    <div class="field"><span>Шины</span><div class="chip-line" id="season"></div><div class="chip-line" id="wear" style="margin-top:6px"></div></div>
+    <div id="checks"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-note">
+    <h2 id="h-note"><span class="n">4</span>Заметки</h2>
+    <label class="field"><span>Свободный текст, если нужно</span>
+      <textarea id="note" placeholder="Всё, что не вошло в списки выше"></textarea></label>
+  </section>
+</main>
+
+<div class="bar">
+  <div class="in">
+    <div class="sum"><b id="sumCar">Авто не выбрано</b><span id="sumDmg">Повреждений: 0</span></div>
+    <button class="btn" id="btnPdf" type="button">PDF</button>
+    <button class="btn primary" id="btnSend" type="button">В Trello</button>
+  </div>
+</div>
+
+<div id="scrim" hidden></div>
+<div id="sheet" role="dialog" aria-modal="true" hidden><div class="grab"></div><div class="inner" id="sheetBody"></div><div class="foot" id="sheetFoot" hidden></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div id="report" aria-hidden="true"></div>
+
+<script src="config.js"></script>
+<script>
+/* Подключение к прокси вместо Claude. Адрес прокси задаётся в config.js */
+(() => {
+  const PASSKEY = 'priemka-pass';
+  const api = () => String(window.APP_API || '').replace(/\/$/, '');
+  const getPass = () => { try { return localStorage.getItem(PASSKEY) || ''; } catch { return ''; } };
+  const setPass = (v) => { try { v ? localStorage.setItem(PASSKEY, v) : localStorage.removeItem(PASSKEY); } catch {} };
+  const askPass = () => { const p = window.prompt('Пароль приложения'); if (p) setPass(p.trim()); return !!p; };
+  const err = (code, message) => ({ code, message });
+  async function call(path, init, retry) {
+    if (!api() || /ВАШ/.test(api())) throw err('tool_error', 'не задан адрес прокси в файле config.js');
+    if (!getPass() && !askPass()) throw err('bad_password', 'нет пароля');
+    let r;
+    try { r = await fetch(api() + path, { ...(init || {}), headers: { ...((init && init.headers) || {}), 'x-pass': getPass() } }); }
+    catch { throw err('server_unavailable', 'нет связи с прокси'); }
+    if (r.status === 401) { setPass(''); if (!retry && askPass()) return call(path, init, true); throw err('bad_password', 'неверный пароль'); }
+    let data = null; try { data = await r.json(); } catch {}
+    if (!r.ok) throw err(r.status === 422 ? 'invalid_json' : 'tool_error', (data && data.error) || ('ошибка ' + r.status));
+    return data;
+  }
+  const b64 = (blob) => new Promise((ok, no) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = no; f.readAsDataURL(blob); });
+  const mcp = {
+    listTools: async () => ({ servers: [{ server: 'Trello', authStatus: 'connected', tools: [{ name: 'trelloReadCard' }] }] }),
+    callTool: async (server, tool, input) => {
+      if (tool === 'trelloReadCard') return { payload: await call('/api/cards') };
+      if (tool === 'trelloWriteCard' && input.action === 'add_comment') {
+        return { payload: await call('/api/comment', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cardId: input.cardId, text: input.text }) }) };
+      }
+      throw err('tool_error', 'неизвестная операция');
+    },
+    attach: async (cardId, name, blob) => {
+      const fd = new FormData(); fd.append('cardId', cardId); fd.append('name', name); fd.append('file', blob, name);
+      return call('/api/attach', { method: 'POST', body: fd });
+    }
+  };
+  const sample = {
+    limits: async () => ({ images: true }),
+    json: async (prompt, opts) => {
+      const images = await Promise.all(((opts && opts.images) || []).map(b64));
+      return call('/api/ocr', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, images }), signal: opts && opts.signal });
+    }
+  };
+  const permissions = { state: async () => 'granted', request: async () => ({}), manage: async () => {} };
+  const downloads = {
+    save: async ({ filename, data }) => {
+      const blob = data instanceof Blob ? data : new Blob([data]);
+      try {
+        const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { await navigator.share({ files: [file] }); return { status: 'saved' }; }
+      } catch (e) { if (e && e.name === 'AbortError') throw err('declined', ''); }
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+      document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      return { status: 'saved' };
+    }
+  };
+  const map = { mcp, sample, permissions, downloads };
+  window.claude = { use: async (n) => map[n] || null };
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(() => {
+'use strict';
+const BOARD = 'ari:cloud:trello::board/workspace/65439c7b0419b7f1952459c5/690b971e0f9ba48c561af089';
+const SERVER = 'Trello';
+const DRIVE = 'Google Drive', DRIVE_FOLDER = '1-azCMmpEF6AAjRmLvQ3s3Z0NzN7FUl7s';
+const KEY = 'priemka-draft-v1', STAFF = 'priemka-staff-v1';
+const $ = (s) => document.querySelector(s);
+const h = (t, a = {}, ...c) => {
+  const e = document.createElement(t);
+  for (const [k, v] of Object.entries(a)) {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, '');
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const x of c.flat()) if (x != null && x !== false) e.append(x.nodeType ? x : document.createTextNode(x));
+  return e;
+};
+const use = (n) => (window.claude && window.claude.use) ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+
+/* ---------- Данные ---------- */
+const P = (pts) => 'M' + pts.map((p) => p.join(' ')).join('L') + 'Z';
+const mir = (pts) => pts.map(([x, y]) => [300 - x, y]).reverse();
+const ZONES = [
+  { id: 'front_bumper', label: 'Бампер передний', d: 'M84 24Q150 8 216 24L220 54L175 54L175 72L125 72L125 54L80 54Z', cx: 150, cy: 38 },
+  { id: 'hood', label: 'Капот', d: P([[80,72],[220,72],[216,168],[84,168]]), cx: 150, cy: 120 },
+  { id: 'windshield', label: 'Лобовое стекло', d: P([[84,170],[216,170],[204,218],[96,218]]), cx: 150, cy: 194 },
+  { id: 'roof', label: 'Крыша', d: P([[96,220],[204,220],[204,338],[96,338]]), cx: 150, cy: 279 },
+  { id: 'rear_window', label: 'Заднее стекло', d: P([[96,340],[204,340],[216,382],[84,382]]), cx: 150, cy: 360 },
+  { id: 'trunk', label: 'Крышка багажника', d: P([[84,384],[216,384],[220,468],[80,468]]), cx: 150, cy: 426 },
+  { id: 'rear_bumper', label: 'Бампер задний', d: 'M80 486L125 486L125 468L175 468L175 486L220 486L216 514Q150 530 84 514Z', cx: 150, cy: 500 }
+];
+const PAIRS = [
+  ['fender_f', 'Крыло переднее левое', 'Крыло переднее правое', [[44,62],[78,62],[78,168],[44,168]]],
+  ['door_f', 'Дверь передняя левая', 'Дверь передняя правая', [[44,170],[78,170],[78,262],[44,262]]],
+  ['door_r', 'Дверь задняя левая', 'Дверь задняя правая', [[44,264],[78,264],[78,356],[44,356]]],
+  ['fender_r', 'Крыло заднее левое', 'Крыло заднее правое', [[44,358],[78,358],[78,470],[44,470]]],
+  ['headlight', 'Фара левая', 'Фара правая', [[80,54],[125,54],[125,72],[80,72]]],
+  ['taillight', 'Фонарь левый', 'Фонарь правый', [[80,468],[125,468],[125,486],[80,486]]],
+  ['wheel_f', 'Колесо переднее левое', 'Колесо переднее правое', [[22,84],[44,84],[44,142],[22,142]]],
+  ['wheel_r', 'Колесо заднее левое', 'Колесо заднее правое', [[22,390],[44,390],[44,448],[22,448]]],
+  ['mirror', 'Зеркало левое', 'Зеркало правое', [[26,174],[46,172],[46,196],[28,198]]]
+];
+for (const [id, l, r, pts] of PAIRS) {
+  const cx = pts.reduce((a, p) => a + p[0], 0) / 4, cy = pts.reduce((a, p) => a + p[1], 0) / 4;
+  ZONES.push({ id: id + '_l', label: l, d: P(pts), cx, cy });
+  ZONES.push({ id: id + '_r', label: r, d: P(mir(pts)), cx: 300 - cx, cy });
+}
+const ZMAP = Object.fromEntries(ZONES.map((z) => [z.id, z]));
+const TYPES = ['Царапина', 'Вмятина', 'Скол', 'Трещина', 'Ржавчина', 'Следы ремонта / перекраска', 'Разбито', 'Отсутствует'];
+const SEV = ['Лёгкое', 'Среднее', 'Сильное'];
+const SEVLIT = ['#F0C24B', '#EE8F3A', '#D9453B'];
+const KEYS = ['1', '2', '3+'];
+const SEASONS = [['S', 'Лето'], ['W', 'Зима'], ['GJ', 'Всесезон']];
+const WEARS = ['Протектор в норме', 'Износ, скоро замена', 'Нужна замена'];
+const CHECKS = [
+  ['Состояние', [['interior_clean', 'Салон чистый'], ['interior_ok', 'Обивка и пластик без повреждений'], ['dash_ok', 'На приборной панели ничего не горит'], ['glass_ok', 'Боковые стёкла целые']]],
+  ['Комплект', [['spare', 'Запасное колесо или ремкомплект'], ['triangle', 'Знак, жилет, аптечка'], ['cable', 'Зарядный кабель (электро- и гибрид)']]],
+  ['Документы', [['brief', 'Brief (Zulassungsbescheinigung II)'], ['coc', 'COC'], ['hu', 'HU/AU']]]
+];
+const CHECKLABEL = Object.fromEntries(CHECKS.flatMap(([, a]) => a));
+
+const S = { employee: '', vin: '', plate: '', card: null, mileage: '', keys: '', season: '', wear: '', checks: {}, note: '', damages: [], sent: false };
+let vinPhoto = null, platePhoto = null;   // {blob, url}
+let cards = null, cardsLoading = null;
+let sample = null, mcp = null, canOCR = false;
+let uid = 1;
+
+/* ---------- Сохранение черновика (без фото) ---------- */
+let saveT = 0;
+const save = () => {
+  clearTimeout(saveT);
+  saveT = setTimeout(() => {
+    store.set(KEY, { ...S, sent: false, damages: S.damages.map((d) => ({ ...d, photo: null })) });
+  }, 250);
+};
+const restore = () => {
+  const d = store.get(KEY);
+  if (!d) return false;
+  const any = d.damages?.length || d.vin || d.plate || d.card || d.mileage || d.note || Object.keys(d.checks || {}).length;
+  if (!any) return false;
+  Object.assign(S, d, { sent: false });
+  S.damages = (d.damages || []).map((x) => ({ ...x, id: uid++ }));
+  return true;
+};
+
+/* ---------- Мелочи ---------- */
+const toast = (msg, ms = 3200) => {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, ms);
+};
+const fmtDate = (d = new Date()) => d.toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+const norm = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9#?]/g, '');
+const mcpMsg = (e) => {
+  switch (e && e.code) {
+    case 'bad_password': return 'Неверный пароль. Обновите страницу и введите его заново.';
+    case 'needs_reauth': return 'Trello отключился. Подключите его заново: claude.ai, Settings, Connectors.';
+    case 'server_not_connected': return 'Trello не подключён. Добавьте его: claude.ai, Settings, Connectors.';
+    case 'not_in_manifest': case 'consent_required': case 'not_granted': return 'Доступ к Trello для этой страницы не разрешён. Разрешите его в меню разрешений страницы.';
+    case 'selection_required': return 'Выберите, какое из подключённых Trello использовать.';
+    case 'blocked_by_policy': return 'Организация не разрешает эту операцию в Trello.';
+    case 'tool_error': return 'Ошибка: ' + (e.message || 'неизвестная');
+    case 'server_unavailable': case 'upstream_error': return 'Trello не ответил. Попробуйте ещё раз через минуту.';
+    default: return 'Не удалось обратиться к Trello (' + ((e && (e.message || e.code)) || 'ошибка') + ').';
+  }
+};
+const sampleMsg = (e) => {
+  switch (e && e.code) {
+    case 'not_granted': case 'sampling_disabled': case 'not_declared': return 'Распознавание отключено: страница не получила доступ к Claude. Введите номера вручную.';
+    case 'images_unavailable': return 'Здесь нельзя отправлять фото на распознавание. Введите номера вручную.';
+    case 'image_rejected': return 'Фото не подошло по формату или размеру. Снимите ещё раз.';
+    case 'rate_limited': return 'Слишком много запросов. Подождите минуту и повторите.';
+    case 'invalid_json': case 'empty_completion': case 'refused': return 'Не удалось прочитать фото. Снимите ближе и при хорошем свете или введите номера вручную.';
+    case 'cancelled': return '';
+    default: return 'Распознавание не удалось. Повторите или введите номера вручную.';
+  }
+};
+const shrink = async (file, max = 1280, q = 0.8) => {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    const r = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.naturalWidth * r)); c.height = Math.max(1, Math.round(img.naturalHeight * r));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', q));
+    return { blob, url: c.toDataURL('image/jpeg', q) };
+  } finally { URL.revokeObjectURL(url); }
+};
+
+/* ---------- Схема ---------- */
+const diagram = (lit) => {
+  const worst = {}, per = {};
+  S.damages.forEach((d, i) => { worst[d.zone] = Math.max(worst[d.zone] ?? -1, d.sev); (per[d.zone] ||= []).push(i + 1); });
+  let s = lit ? '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="566" viewBox="0 -16 300 566">'
+              : '<svg viewBox="0 -16 300 566" role="group" aria-label="Схема автомобиля сверху">';
+  for (const z of ZONES) {
+    const w = worst[z.id];
+    s += lit
+      ? `<path d="${z.d}" fill="${w === undefined ? '#F7F9FB' : SEVLIT[w]}" stroke="#566472" stroke-width="1.4"/>`
+      : `<path class="zone" data-zone="${z.id}"${w === undefined ? '' : ` data-sev="${w}"`} d="${z.d}" tabindex="0" role="button" aria-label="${z.label}"/>`;
+  }
+  s += lit ? '<g font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#566472" text-anchor="middle" letter-spacing="1.5"><text x="150" y="-3">ПЕРЕД</text><text x="150" y="546">ЗАД</text></g>'
+           : '<text class="axis" x="150" y="-3">ПЕРЕД</text><text class="axis" x="150" y="546">ЗАД</text>';
+  for (const [zid, nums] of Object.entries(per)) {
+    const z = ZMAP[zid];
+    nums.forEach((n, k) => {
+      const x = z.cx + (k - (nums.length - 1) / 2) * 17;
+      s += lit
+        ? `<g><circle cx="${x}" cy="${z.cy}" r="8.5" fill="#13202B" stroke="#fff" stroke-width="1.5"/><text x="${x}" y="${z.cy + 3.5}" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">${n}</text></g>`
+        : `<g class="mk" pointer-events="none"><circle cx="${x}" cy="${z.cy}" r="8.5"/><text x="${x}" y="${z.cy}">${n}</text></g>`;
+    });
+  }
+  return s + '</svg>';
+};
+
+/* ---------- Отрисовка ---------- */
+const chips = (box, items, getV, getL, cur, on, cls) => {
+  box.replaceChildren(...items.map((it, i) => {
+    const v = getV(it, i);
+    const b = h('button', { type: 'button', class: 'chip' + (cls ? ' ' + cls(i) : ''), 'aria-pressed': String(cur() === v) }, getL(it, i));
+    b.addEventListener('click', () => { on(cur() === v ? '' : v); });
+    return b;
+  }));
+};
+const renderDiagram = () => { $('#diagram').innerHTML = diagram(false); };
+const renderDamages = () => {
+  const box = $('#dlist');
+  if (!S.damages.length) { box.replaceChildren(h('p', { class: 'hint' }, 'Повреждений пока нет.')); return; }
+  box.replaceChildren(...S.damages.map((d, i) => h('div', { class: 'dmg' },
+    h('span', { class: 'no' }, String(i + 1)),
+    h('div', {},
+      h('div', { class: 'tt' }, ZMAP[d.zone].label),
+      h('div', { class: 'sub' }, h('span', { class: 'sevdot', style: `background:var(--s${d.sev})` }), `${d.type}, ${SEV[d.sev].toLowerCase()}`),
+      d.note ? h('div', { class: 'sub' }, d.note) : null),
+    h('button', { class: 'x', type: 'button', 'aria-label': 'Удалить повреждение ' + (i + 1), onclick: () => removeDamage(d.id) }, '×'),
+    d.photo ? h('img', { src: d.photo, alt: 'Фото повреждения ' + (i + 1) }) : null)));
+};
+const renderKeys = () => {
+  chips($('#keys'), KEYS, (k) => k, (k) => k, () => S.keys, (v) => { S.keys = v; renderKeys(); save(); });
+  chips($('#season'), SEASONS, (s) => s[0], (s) => s[1], () => S.season, (v) => { S.season = v; renderKeys(); save(); });
+  chips($('#wear'), WEARS, (w) => w, (w) => w, () => S.wear, (v) => { S.wear = v; renderKeys(); save(); });
+};
+const renderChecks = () => {
+  $('#checks').replaceChildren(...CHECKS.map(([title, items]) => h('div', { class: 'group', style: 'margin-bottom:10px' },
+    h('h3', {}, title),
+    ...items.map(([id, label]) => {
+      const v = S.checks[id];
+      const mk = (val, txt, cls) => h('button', { type: 'button', class: cls, 'aria-pressed': String(v === val), onclick: () => {
+        if (S.checks[id] === val) delete S.checks[id]; else S.checks[id] = val;
+        renderChecks(); save();
+      } }, txt);
+      return h('div', { class: 'crow' }, h('span', {}, label), h('div', { class: 'yn' }, mk('y', 'Да', 'y'), mk('n', 'Нет', 'n')));
+    }))));
+};
+const renderBar = () => {
+  $('#sumCar').textContent = S.card ? S.card.name : 'Авто не выбрано';
+  $('#sumDmg').textContent = 'Повреждений: ' + S.damages.length;
+  $('#btnSend').disabled = !S.card;
+};
+const renderCar = () => {
+  const box = $('#carArea');
+  if (!S.card) { box.replaceChildren(); return; }
+  box.replaceChildren(h('div', { class: 'carbox' },
+    h('div', { class: 'nm' }, S.card.name),
+    h('div', { class: 'meta' }, 'Карточка Trello' + (S.card.list ? ', список «' + S.card.list + '»' : '')),
+    h('div', {}, h('button', { class: 'linkbtn', type: 'button', onclick: () => { S.card = null; renderCar(); renderBar(); save(); } }, 'Выбрать другую'))));
+};
+const renderAll = () => {
+  $('#employee').value = S.employee; $('#vin').value = S.vin; $('#plate').value = S.plate;
+  $('#mileage').value = S.mileage; $('#note').value = S.note;
+  renderCar(); renderDiagram(); renderDamages(); renderKeys(); renderChecks(); renderBar();
+};
+
+/* ---------- Окно снизу ---------- */
+let lastFocus = null;
+const openSheet = (body, foot = []) => {
+  lastFocus = document.activeElement;
+  $('#sheetBody').replaceChildren(...body.filter(Boolean));
+  const f = foot.filter(Boolean);
+  $('#sheetFoot').hidden = !f.length;
+  $('#sheetFoot').replaceChildren(h('div', {}, ...f));
+  $('#scrim').hidden = false; $('#sheet').hidden = false; $('#sheetBody').scrollTop = 0;
+};
+const closeSheet = () => {
+  $('#scrim').hidden = true; $('#sheet').hidden = true;
+  if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch {} }
+};
+$('#scrim').addEventListener('click', closeSheet);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+
+const removeDamage = (id) => { S.damages = S.damages.filter((d) => d.id !== id); renderDiagram(); renderDamages(); renderBar(); save(); };
+
+const openZone = (zid) => {
+  const z = ZMAP[zid];
+  let type = '', sev = -1, photo = null;
+  const typeBox = h('div', { class: 'chip-line' }), sevBox = h('div', { class: 'chip-line' });
+  const typeField = h('div', { class: 'field' }, h('span', {}, 'Что повреждено'), typeBox);
+  const sevField = h('div', { class: 'field' }, h('span', {}, 'Насколько сильно'), sevBox);
+  const msg = h('p', { class: 'err', hidden: true });
+  const addBtn = h('button', { class: 'btn primary', type: 'button' }, 'Добавить');
+  const thumb = h('div', { class: 'thumbrow' });
+  const file = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
+  const note = h('input', { type: 'text', id: 'dnote', placeholder: 'Комментарий, необязательно', autocomplete: 'off' });
+  const drawChips = () => {
+    chips(typeBox, TYPES, (t) => t, (t) => t, () => type, (v) => { type = v; msg.hidden = true; drawChips(); });
+    chips(sevBox, SEV, (s, i) => i, (s) => s, () => sev, (v) => { sev = v === '' ? -1 : v; msg.hidden = true; drawChips(); }, (i) => 's' + i);
+  };
+  const drawThumb = () => thumb.replaceChildren(...[
+    photo ? h('img', { src: photo, alt: 'Фото' }) : null,
+    h('button', { class: 'btn small', type: 'button', onclick: () => file.click() }, photo ? 'Переснять' : 'Добавить фото')
+  ].filter(Boolean));
+  file.addEventListener('change', async () => {
+    const f = file.files && file.files[0]; if (!f) return;
+    try { photo = (await shrink(f)).url; } catch { toast('Не удалось открыть фото'); }
+    file.value = ''; drawThumb();
+  });
+  addBtn.addEventListener('click', () => {
+    if (!type || sev < 0) {
+      msg.textContent = !type ? 'Выберите, что повреждено.' : 'Выберите, насколько сильно.';
+      msg.hidden = false;
+      (!type ? typeField : sevField).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return;
+    }
+    S.damages.push({ id: uid++, zone: zid, type, sev, note: note.value.trim(), photo });
+    renderDiagram(); renderDamages(); renderBar(); save(); closeSheet();
+    toast('Добавлено: ' + z.label);
+  });
+  drawChips(); drawThumb();
+  const old = S.damages.filter((d) => d.zone === zid);
+  openSheet([
+    h('h3', { class: 't' }, z.label),
+    old.length ? h('div', { class: 'dlist' }, ...old.map((d) => h('div', { class: 'dmg', style: 'grid-template-columns:1fr auto' },
+      h('div', {}, h('div', { class: 'tt' }, d.type), h('div', { class: 'sub' }, SEV[d.sev] + (d.note ? ', ' + d.note : ''))),
+      h('button', { class: 'x', type: 'button', 'aria-label': 'Удалить', onclick: () => { removeDamage(d.id); openZone(zid); } }, '×')))) : null,
+    typeField, sevField,
+    h('div', { class: 'field' }, h('span', {}, 'Фото'), thumb, file),
+    h('label', { class: 'field' }, h('span', {}, 'Комментарий'), note)
+  ], [msg, h('div', { class: 'acts' }, h('button', { class: 'btn', type: 'button', onclick: closeSheet }, 'Отмена'), addBtn)]);
+};
+$('#diagram').addEventListener('click', (e) => { const p = e.target.closest('[data-zone]'); if (p) openZone(p.dataset.zone); });
+$('#diagram').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const p = e.target.closest('[data-zone]'); if (p) { e.preventDefault(); openZone(p.dataset.zone); }
+});
+
+/* ---------- Trello: карточки ---------- */
+const CARD = (x) => 'ari:cloud:trello::card/workspace/65439c7b0419b7f1952459c5/' + x;
+const SNAP_DATE = '12.10.2026';
+/* Запасной список, если Trello не отвечает. Снят с доски ЛОГИСТИКА (без списка «Отгружен») в указанную дату. */
+const SNAP = [
+].map(([id, name, desc, list, path]) => ({ id: CARD(id), name, desc, list, url: 'https://trello.com/c/' + path }));
+
+const EXCL = /^отгружен/i;
+const parse = (r) => {
+  let p = r && r.payload;
+  if (typeof p === 'string') { try { p = JSON.parse(p); } catch { p = null; } }
+  return p;
+};
+const extra = (c) => [].concat((c.comments || []).map((m) => m && (m.text || '')), (c.checklists || []).map((l) => JSON.stringify(l && (l.items || l.checkItems || l.name) || ''))).join(' ');
+const toCard = (c, list) => ({ id: c.id, name: c.name || '', desc: ((c.desc ?? c.description ?? '') + ' ' + extra(c)).replace(/\u200c/g, ' '), url: c.url || c.webUrl || c.shortUrl || '', list: list || '' });
+/* Коннектор отдаёт карточки в двух видах: сгруппированными по спискам или плоским списком cards.nodes. */
+const extract = (p) => {
+  if (!p || typeof p !== 'object') return null;
+  const out = [];
+  if (Array.isArray(p.lists)) {
+    for (const l of p.lists) { if (EXCL.test(l.name || '')) continue; for (const c of l.cards || []) out.push(toCard(c, l.name)); }
+    return out;
+  }
+  const nodes = Array.isArray(p.cards) ? p.cards : (p.cards && Array.isArray(p.cards.nodes) ? p.cards.nodes : null);
+  if (!nodes) return null;
+  for (const c of nodes) { const ln = (c.list && c.list.name) || ''; if (EXCL.test(ln)) continue; out.push(toCard(c, ln)); }
+  return out;
+};
+const errText = (e) => mcpMsg(e) + ' [' + ((e && e.code) || 'ошибка') + ']';
+const askTrello = async () => {
+  const pm = await use('permissions'); if (!pm) return;
+  try { const need = []; for (const n of [SERVER, DRIVE]) if ((await pm.state('mcp:' + n)) === 'prompt') need.push('mcp:' + n); if (need.length) await pm.request(need); } catch {}
+};
+let cardsSrc = 'none';
+const loadCards = () => {
+  if (cards && cardsSrc === 'live') return Promise.resolve(true);
+  if (cardsLoading) return cardsLoading;
+  cardsLoading = (async () => {
+    if (!mcp) throw { code: 'server_not_connected', message: 'нет доступа к подключениям' };
+    await askTrello();
+    const out = []; let cursor;
+    for (let page = 0; page < 10; page++) {
+      const input = { action: 'list_by_board', boardIdOrUrl: BOARD, limit: 50 };
+      if (cursor) input.cursor = cursor;
+      const p = parse(await mcp.callTool(SERVER, 'trelloReadCard', input, { cache: { staleTime: 60000 } }));
+      const got = extract(p);
+      if (got === null) throw { code: 'tool_error', message: 'неожиданный формат ответа (' + Object.keys(p || {}).join(', ') + ')' };
+      out.push(...got);
+      const pi = (p && p.pageInfo) || {};
+      const more = pi.hasNextPage ?? p.hasNextPage, next = pi.endCursor ?? p.nextCursor;
+      if (!more || !next) break;
+      cursor = next;
+    }
+    cards = out; cardsSrc = 'live'; return true;
+  })().finally(() => { cardsLoading = null; });
+  return cardsLoading;
+};
+const withCards = async () => {
+  try { await loadCards(); return { live: true }; }
+  catch (e) { if (!cards) { cards = SNAP; cardsSrc = 'snap'; } return { live: false, err: e }; }
+};
+const permBtn = () => h('button', { class: 'btn small', type: 'button', onclick: async () => {
+  const pm = await use('permissions');
+  if (pm) { try { await pm.manage(); return; } catch {} }
+  toast('Откройте меню «Разрешения» у этой страницы', 5000);
+} }, 'Открыть разрешения');
+const liveNote = (r) => {
+  if (r.live) return [];
+  const code = r.err && r.err.code;
+  const nodes = [h('p', { class: 'err' }, errText(r.err) + ' Ищу в сохранённом списке от ' + SNAP_DATE + ', новые авто в нём могут отсутствовать.')];
+  if (code === 'not_in_manifest' || code === 'consent_required' || code === 'not_granted') nodes.push(permBtn());
+  return nodes;
+};
+const match = () => {
+  const v = norm(S.vin).replace(/#/g, ''), p = norm(S.plate).replace(/#/g, '');
+  const l6 = v.slice(-6), l3 = v.slice(-3);
+  return (cards || []).map((c) => {
+    const hay = norm(c.name + ' ' + c.desc);
+    let sc = 0;
+    if (v.length === 17 && !v.includes('?') && hay.includes(v)) sc += 100;
+    else if (l6.length === 6 && !l6.includes('?') && hay.includes(l6)) sc += 60;
+    else if (l3.length === 3 && !l3.includes('?') && hay.includes('#' + l3)) sc += 25;
+    if (p.length >= 4 && !p.includes('?') && hay.includes(p)) sc += 80;
+    return { c, sc };
+  }).filter((x) => x.sc > 0).sort((a, b) => b.sc - a.sc);
+};
+const choose = (c) => { S.card = c; renderCar(); renderBar(); save(); $('#carArea').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
+const showCands = (list, title, note = []) => {
+  $('#carArea').replaceChildren(h('div', { class: 'cands' }, h('span', { class: 'lbl' }, title),
+    ...list.slice(0, 6).map(({ c }) => h('button', { class: 'cand', type: 'button', onclick: () => choose(c) }, h('b', {}, c.name), h('span', { class: 'l' }, c.list))),
+    ...note));
+};
+const findCard = async (quiet) => {
+  if (!S.vin && !S.plate) { if (!quiet) toast('Введите VIN или номер'); return; }
+  const box = $('#carArea'); box.replaceChildren(h('p', { class: 'hint' }, 'Ищу карточку в Trello…'));
+  const r = await withCards();
+  const note = liveNote(r);
+  const m = match();
+  if (m.length && m[0].sc >= 60 && (!m[1] || m[1].sc < m[0].sc)) {
+    choose(m[0].c);
+    if (!r.live) toast('Trello не отвечает. Карточка найдена в сохранённом списке.', 5000);
+    return;
+  }
+  if (m.length) { showCands(m, 'Несколько подходящих, выберите', note); return; }
+  box.replaceChildren(h('p', { class: 'hint' }, 'Подходящей карточки нет. Проверьте номера или выберите из списка.'), ...note);
+};
+const openPicker = async () => {
+  const box = $('#carArea'); box.replaceChildren(h('p', { class: 'hint' }, 'Загружаю список из Trello…'));
+  const r = await withCards();
+  const q = h('input', { type: 'text', placeholder: 'Поиск по названию', autocomplete: 'off', 'aria-label': 'Поиск карточки' });
+  const list = h('div', { class: 'cands' });
+  const draw = () => {
+    const t = q.value.trim().toUpperCase();
+    const f = cards.filter((c) => !t || (c.name + ' ' + c.desc.slice(0, 80)).toUpperCase().includes(t)).slice(0, 30);
+    list.replaceChildren(...(f.length ? f.map((c) => h('button', { class: 'cand', type: 'button', onclick: () => choose(c) }, h('b', {}, c.name), h('span', { class: 'l' }, c.list))) : [h('p', { class: 'hint' }, 'Ничего не найдено')]));
+  };
+  q.addEventListener('input', draw); draw();
+  box.replaceChildren(h('div', { class: 'picker' }, ...liveNote(r), q, list));
+  q.focus();
+};
+
+/* ---------- Распознавание по фото ---------- */
+const bindTile = (tile, input, setPhoto) => {
+  tile.addEventListener('click', () => input.click());
+  input.addEventListener('change', async () => {
+    const f = input.files && input.files[0]; if (!f) return;
+    try {
+      const p = await shrink(f, 1600, 0.85); setPhoto(p);
+      tile.classList.add('has'); tile.querySelector('img')?.remove(); tile.prepend(h('img', { src: p.url, alt: '' }));
+      $('#btnRead').disabled = !(vinPhoto || platePhoto);
+    } catch { toast('Не удалось открыть фото'); }
+    input.value = '';
+  });
+};
+let readCtl = null;
+const readPhotos = async () => {
+  const imgs = [], desc = [];
+  if (vinPhoto) { imgs.push(vinPhoto.blob); desc.push(`Изображение ${imgs.length}: табличка или выбитый номер кузова (VIN).`); }
+  if (platePhoto) { imgs.push(platePhoto.blob); desc.push(`Изображение ${imgs.length}: номерной знак автомобиля.`); }
+  if (!imgs.length || !sample) return;
+  const err = $('#ocrErr'), btn = $('#btnRead');
+  err.hidden = true; btn.disabled = true; btn.textContent = 'Читаю фото…';
+  readCtl = new AbortController();
+  const prompt = `На фото данные автомобиля. ${desc.join(' ')} Прочитай символы точно, по одному. VIN состоит из 17 символов: цифры и заглавные латинские буквы, кроме I, O и Q. Если символ нечитаем, поставь на его место «?». Номерной знак перепиши как напечатан, без пробелов и дефисов, без обозначения страны. Если нужного фото нет или текст не виден, верни для этого поля null. Ответь только JSON вида {"vin": строка или null, "plate": строка или null}.`;
+  try {
+    const r = await sample.json(prompt, { images: imgs, signal: readCtl.signal });
+    const vin = r && typeof r.vin === 'string' ? r.vin.toUpperCase().replace(/[\s-]/g, '') : '';
+    const plate = r && typeof r.plate === 'string' ? r.plate.toUpperCase().replace(/[\s-]/g, '') : '';
+    if (vin) S.vin = vin.slice(0, 17); if (plate) S.plate = plate.slice(0, 12);
+    $('#vin').value = S.vin; $('#plate').value = S.plate; save();
+    if (!vin && !plate) { err.textContent = 'На фото ничего не прочиталось. Снимите ближе или введите вручную.'; err.hidden = false; }
+    else {
+      if ((vin && (vin.length !== 17 || vin.includes('?'))) ) toast('VIN прочитан не полностью, проверьте символы', 5000);
+      await findCard(true);
+    }
+  } catch (e) {
+    const m = sampleMsg(e); if (m) { err.textContent = m; err.hidden = false; }
+  } finally { btn.textContent = 'Распознать по фото'; btn.disabled = !(vinPhoto || platePhoto); readCtl = null; }
+};
+
+/* ---------- Отчёт ---------- */
+const tireLine = () => {
+  const s = SEASONS.find((x) => x[0] === S.season);
+  return [s ? `${s[0]} (${s[1].toLowerCase()})` : '', S.wear].filter(Boolean).join(', ');
+};
+const buildComment = () => {
+  const L = [];
+  L.push(`**Приёмка автомобиля** · ${fmtDate()}`);
+  if (S.employee) L.push(`Осматривал: ${S.employee}`);
+  if (S.vin || S.plate) L.push(`VIN: ${S.vin || '—'} · Номер: ${S.plate || '—'}`);
+  if (S.mileage) L.push(`Пробег: ${S.mileage} км`);
+  if (S.keys) L.push(`Ключи: ${S.keys}`);
+  if (S.season || S.wear) L.push(`Reifen: ${tireLine()}`);
+  L.push('');
+  L.push(S.damages.length ? `**Повреждения (${S.damages.length}):**` : '**Повреждений не отмечено**');
+  S.damages.forEach((d, i) => L.push(`${i + 1}. ${ZMAP[d.zone].label}: ${d.type.toLowerCase()}, ${SEV[d.sev].toLowerCase()}${d.note ? '. ' + d.note : ''}${d.photo ? ' (фото в PDF)' : ''}`));
+  const yes = [], no = [];
+  for (const [id, label] of Object.entries(CHECKLABEL)) { if (S.checks[id] === 'y') yes.push(label); else if (S.checks[id] === 'n') no.push(label); }
+  if (no.length) { L.push(''); L.push('**Нет / проблема:**'); no.forEach((x) => L.push('- ' + x)); }
+  if (yes.length) { L.push(''); L.push('**В порядке:** ' + yes.join('; ')); }
+  if (S.note.trim()) { L.push(''); L.push('**Заметки:** ' + S.note.trim()); }
+  return L.join('\n');
+};
+const reportBlocks = () => {
+  const B = [];
+  const rows = [['Автомобиль', S.card ? S.card.name : '—'], ['VIN', S.vin || '—'], ['Номер', S.plate || '—'], ['Пробег', S.mileage ? S.mileage + ' км' : '—'], ['Ключи', S.keys || '—'], ['Шины', tireLine() || '—']];
+  B.push(h('div', { class: 'rb' }, h('div', { class: 'rt' }, 'Приёмка автомобиля'), h('div', { class: 'rs' }, fmtDate() + (S.employee ? ' · ' + S.employee : '')),
+    h('table', {}, ...rows.map(([k, v]) => h('tr', {}, h('td', {}, k), h('td', {}, v))))));
+  const svg = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(diagram(true));
+  B.push(h('div', { class: 'rb', style: 'text-align:center' }, h('h4', { style: 'text-align:left' }, 'Схема повреждений'), h('img', { src: svg, width: 300, height: 566, alt: '' }),
+    h('div', { style: 'color:#566472;font-size:12px' }, 'Жёлтый: лёгкое · оранжевый: среднее · красный: сильное')));
+  S.damages.forEach((d, i) => B.push(h('div', { class: 'rb' }, h('div', { class: 'rd' }, h('div', { class: 'no' }, String(i + 1)),
+    h('div', {}, h('b', {}, ZMAP[d.zone].label), h('div', {}, `${d.type}, ${SEV[d.sev].toLowerCase()}`), d.note ? h('div', { style: 'color:#566472' }, d.note) : null,
+      d.photo ? h('img', { src: d.photo, alt: '' }) : null)))));
+  const items = Object.entries(CHECKLABEL).map(([id, label]) => { const v = S.checks[id]; return h('div', {}, (v === 'y' ? '✓ ' : v === 'n' ? '✗ ' : '– ') + label); });
+  B.push(h('div', { class: 'rb' }, h('h4', {}, 'Состояние и комплект'), h('div', { class: 'two' }, ...items),
+    h('div', { style: 'color:#566472;font-size:12px;margin-top:6px' }, '✓ да · ✗ нет · – не проверено')));
+  if (S.note.trim()) B.push(h('div', { class: 'rb' }, h('h4', {}, 'Заметки'), h('div', { style: 'white-space:pre-wrap' }, S.note.trim())));
+  return B;
+};
+const makePdf = async (q) => {
+  q = q || { scale: 2, jpeg: 0.88 };
+  if (!window.jspdf || !window.html2canvas) throw { code: 'lib', message: 'Библиотека PDF не загрузилась' };
+  const root = $('#report'); root.replaceChildren(...reportBlocks());
+  await Promise.all([...root.querySelectorAll('img')].map((i) => i.decode().catch(() => {})));
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+  let y = 10;
+  for (const el of [...root.children]) {
+    const cv = await window.html2canvas(el, { scale: q.scale, backgroundColor: '#ffffff', logging: false });
+    const hh = cv.height * 190 / cv.width;
+    if (y + hh > 287 && y > 10) { pdf.addPage(); y = 10; }
+    pdf.addImage(cv.toDataURL('image/jpeg', q.jpeg), 'JPEG', 10, y, 190, hh);
+    y += hh + 2;
+  }
+  root.replaceChildren();
+  return pdf.output('blob');
+};
+const savePdf = async (btn) => {
+  const old = btn.textContent; btn.disabled = true; btn.textContent = '…';
+  try {
+    const blob = await makePdf();
+    const dl = await use('downloads');
+    if (!dl) { toast('Сохранение файла недоступно в этом окне', 5000); return; }
+    const tag = (S.plate || S.vin || 'auto').replace(/[^A-Z0-9]/gi, '') || 'auto';
+    await dl.save({ filename: `Priemka_${tag}_${new Date().toISOString().slice(0, 10)}.pdf`, data: blob });
+    toast('PDF сохранён');
+  } catch (e) {
+    if (e && e.code === 'declined') return;
+    toast(e && e.code === 'lib' ? e.message : 'Не удалось сохранить PDF. Попробуйте ещё раз.', 5000);
+  } finally { btn.disabled = false; btn.textContent = old; }
+};
+
+/* ---------- Отправка в Trello ---------- */
+const copyText = async (text, okMsg) => {
+  try { await navigator.clipboard.writeText(text); toast(okMsg || 'Скопировано'); return; } catch {}
+  const ta = h('textarea', { style: 'position:fixed;left:-9999px;top:0', readonly: true });
+  ta.value = text; document.body.append(ta); ta.select();
+  let done = false; try { done = document.execCommand('copy'); } catch {}
+  ta.remove();
+  toast(done ? (okMsg || 'Скопировано') : 'Не удалось скопировать. Выделите текст вручную.', 4000);
+};
+const pdfName = () => `Priemka_${(S.plate || S.vin || 'auto').replace(/[^A-Z0-9]/gi, '') || 'auto'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+const b64 = (blob) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(blob); });
+/* Загружает PDF в Google Drive, возвращает ссылку. */
+const driveErr = (e) => 'PDF: ' + ((e && e.message) || (e && e.code) || 'ошибка');
+const uploadPdf = async () => {
+  const name = pdfName();
+  const blob = await makePdf();
+  await mcp.attach(S.card.id, name, blob);
+  return name;
+};
+const askSend = () => {
+  if (!S.card) { toast('Сначала выберите автомобиль'); return; }
+  const text = buildComment();
+  const errP = h('p', { class: 'err', hidden: true });
+  const copyBtn = h('button', { class: 'btn', type: 'button', onclick: () => copyText(text, 'Отчёт скопирован') }, 'Скопировать текст');
+  const go = h('button', { class: 'btn primary', type: 'button' }, 'Отправить');
+  if (!mcp) { go.disabled = true; errP.textContent = 'В этом окне нет доступа к Trello. Скопируйте текст и вставьте его в карточку.'; errP.hidden = false; }
+  go.addEventListener('click', async () => {
+    go.disabled = true; go.textContent = 'Отправляю…'; errP.hidden = true;
+    try {
+      await askTrello();
+      let link = '', upErr = '';
+      go.textContent = 'Загружаю PDF…';
+      try { link = await uploadPdf(); } catch (e) { upErr = driveErr(e); }
+      go.textContent = 'Отправляю…';
+      const full = link ? text + '\n\n**PDF-отчёт приложен к карточке файлом.**' : text + '\n\n(PDF не удалось приложить)';
+      await mcp.callTool(SERVER, 'trelloWriteCard', { action: 'add_comment', cardId: S.card.id, text: full }, { cache: false });
+      S.sent = true; S.pdfLink = link; S.pdfErr = upErr; store.del(KEY); sentView();
+    } catch (e) {
+      errP.textContent = errText(e) + (e && (e.code === 'server_unavailable' || e.code === 'upstream_error') ? ' Перед повтором проверьте карточку: комментарий мог уже появиться.' : '') + ' Можно скопировать текст и вставить его в карточку вручную.';
+      errP.hidden = false; go.disabled = false; go.textContent = 'Отправить ещё раз';
+    }
+  });
+  const photos = S.damages.filter((d) => d.photo).length;
+  openSheet([
+    h('h3', { class: 't' }, 'Отправить в Trello?'),
+    h('div', { class: 'carbox' }, h('div', { class: 'nm' }, S.card.name), h('div', { class: 'meta' }, `Повреждений: ${S.damages.length}` + (S.employee ? ' · ' + S.employee : ''))),
+    h('p', { class: 'hint' }, 'PDF прикрепится к карточке файлом, и добавится комментарий с текстом отчёта.' + (photos ? ` Фото (${photos}) в Trello не передаются: они остаются в PDF.` : '')),
+    h('details', {}, h('summary', {}, 'Показать текст отчёта'), h('textarea', { readonly: true, style: 'margin-top:8px;min-height:160px', 'aria-label': 'Текст отчёта' }, text))
+  ], [errP, h('div', { class: 'acts' }, h('button', { class: 'btn', type: 'button', onclick: closeSheet }, 'Отмена'), copyBtn, go)]);
+};
+const sentView = () => {
+  const pdfBtn = h('button', { class: 'btn', type: 'button' }, 'Скачать PDF');
+  pdfBtn.addEventListener('click', () => savePdf(pdfBtn));
+  openSheet([
+    h('h3', { class: 't' }, 'Отправлено'),
+    h('p', { class: 'ok' }, 'Отчёт добавлен в карточку «' + S.card.name + '».'),
+    S.pdfLink ? h('p', { class: 'ok' }, 'PDF приложен к карточке.') : h('p', { class: 'err' }, 'PDF не удалось приложить' + (S.pdfErr ? ': ' + S.pdfErr : '') + '. Скачайте его кнопкой ниже и приложите к карточке вручную.'),
+    S.card.url ? h('a', { class: 'btn', href: S.card.url, target: '_blank', rel: 'noopener' }, 'Открыть карточку') : null,
+    pdfBtn
+  ], [h('div', { class: 'acts' }, h('button', { class: 'btn primary', type: 'button', onclick: () => { resetAll(); closeSheet(); } }, 'Новая приёмка'))]);
+};
+const resetAll = () => {
+  Object.assign(S, { vin: '', plate: '', card: null, mileage: '', keys: '', season: '', wear: '', checks: {}, note: '', damages: [], sent: false });
+  vinPhoto = platePhoto = null;
+  for (const t of ['#tileVin', '#tilePlate']) { const el = $(t); if (el) { el.classList.remove('has'); el.querySelector('img')?.remove(); } }
+  $('#btnRead').disabled = true; $('#ocrErr').hidden = true; $('#banners').replaceChildren();
+  store.del(KEY); renderAll(); window.scrollTo({ top: 0 });
+};
+
+/* ---------- Запуск ---------- */
+const bind = (sel, key, post) => $(sel).addEventListener('input', (e) => { S[key] = post ? post(e.target.value) : e.target.value; save(); });
+bind('#vin', 'vin', (v) => v.toUpperCase().replace(/\s/g, ''));
+bind('#plate', 'plate', (v) => v.toUpperCase().replace(/\s/g, ''));
+bind('#mileage', 'mileage', (v) => v.replace(/[^\d]/g, ''));
+bind('#note', 'note');
+$('#employee').addEventListener('input', (e) => { S.employee = e.target.value; save(); });
+$('#employee').addEventListener('change', () => {
+  const n = S.employee.trim(); if (!n) return;
+  const l = store.get(STAFF) || []; if (!l.includes(n)) { l.unshift(n); store.set(STAFF, l.slice(0, 12)); fillStaff(); }
+});
+const fillStaff = () => { $('#staff').replaceChildren(...(store.get(STAFF) || []).map((n) => h('option', { value: n }))); };
+$('#btnFind').addEventListener('click', () => findCard(false));
+$('#btnPick').addEventListener('click', openPicker);
+$('#btnRead').addEventListener('click', readPhotos);
+$('#btnPdf').addEventListener('click', (e) => savePdf(e.currentTarget));
+$('#btnSend').addEventListener('click', askSend);
+$('#btnNew').addEventListener('click', () => openSheet([
+  h('h3', { class: 't' }, 'Начать новую приёмку?'),
+  h('p', { class: 'hint' }, 'Всё введённое сейчас будет стёрто.')
+], [h('div', { class: 'acts' }, h('button', { class: 'btn', type: 'button', onclick: closeSheet }, 'Отмена'),
+  h('button', { class: 'btn primary', type: 'button', onclick: () => { resetAll(); closeSheet(); } }, 'Стереть и начать'))]));
+bindTile($('#tileVin'), $('#fileVin'), (p) => { vinPhoto = p; });
+bindTile($('#tilePlate'), $('#filePlate'), (p) => { platePhoto = p; });
+
+$('#stamp').textContent = new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+fillStaff();
+const restored = restore();
+renderAll();
+if (restored) $('#banners').append(h('div', { class: 'banner' }, 'Черновик восстановлен. Фото в черновике не сохраняются, их нужно снять заново.'));
+
+(async () => {
+  [sample, mcp] = await Promise.all([use('sample'), use('mcp')]);
+  if (sample) {
+    const lim = await sample.limits().catch(() => null);
+    canOCR = !!(lim && lim.images);
+  }
+  $('#ocr').hidden = !canOCR;
+  if (!mcp) {
+    $('#banners').append(h('div', { class: 'banner warn' }, 'В этом окне нет доступа к Trello. Карточку можно выбрать из сохранённого списка от ' + SNAP_DATE + ', а отчёт скопировать и вставить в карточку вручную. PDF сохраняется.'));
+  } else {
+    try {
+      const r = await mcp.listTools(SERVER);
+      const s = r.servers && r.servers[0];
+      if (!s || !s.tools.length) $('#banners').append(h('div', { class: 'banner warn' }, 'Trello не найден среди ваших подключений. Добавьте его: claude.ai, Settings, Connectors.'));
+      else if (s.authStatus === 'needs_reauth') $('#banners').append(h('div', { class: 'banner warn' }, 'Trello просит войти заново: claude.ai, Settings, Connectors.'));
+    } catch {}
+  }
+  renderBar();
+})();
+})();
+</script>
+</body></html>
