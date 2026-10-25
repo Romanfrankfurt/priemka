@@ -109,7 +109,7 @@ input.mono { font-family: var(--font-mono); letter-spacing: .06em; text-transfor
 .dmg .no { font: 600 12px var(--font-mono); background: var(--ink); color: var(--bg); width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; }
 .dmg .tt { font-weight: 600; }
 .dmg .sub { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
-.dmg img { grid-column: 2 / 4; width: 120px; border-radius: 6px; margin-top: 4px; }
+.dmg .dph { grid-column: 2 / 4; }
 .sevdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
 .x { background: none; border: 0; font-size: 22px; line-height: 1; width: 40px; height: 40px; color: var(--muted); }
 
@@ -139,7 +139,17 @@ details summary { cursor: pointer; font-weight: 600; min-height: 36px; display: 
 .acts { display: flex; gap: 10px; flex-wrap: wrap; }
 .acts .btn { flex: 1; min-width: 120px; }
 .thumbrow { display: flex; align-items: center; gap: 10px; }
-.thumbrow img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; }
+.thumbrow { flex-wrap: wrap; }
+.thumbrow img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; display: block; }
+.thumbrow .th { position: relative; }
+.thumbrow .th .rm { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--ink); color: var(--bg); font-size: 14px; line-height: 22px; padding: 0; }
+.field.bad input { border-color: var(--s2); box-shadow: 0 0 0 2px var(--s2); }
+.btn.mic.rec { background: var(--s2); border-color: var(--s2); color: #fff; }
+.said { background: var(--surface); border: 1.5px dashed var(--line); border-radius: 8px; padding: 10px; white-space: pre-wrap; font-size: 14px; }
+.pv { background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 8px; }
+.pv select, .pv input { width: 100%; }
+.sel2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#vtext { min-height: 110px; }
 .toast { position: fixed; left: 16px; right: 16px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 50; max-width: 528px; margin: 0 auto; background: var(--ink); color: var(--bg); padding: 12px 14px; border-radius: 10px; font-weight: 500; }
 .err { color: var(--bad); font-size: 14px; margin: 0; }
 .ok { color: var(--ok); font-weight: 600; }
@@ -157,7 +167,9 @@ a.btn { display: inline-grid; place-items: center; text-decoration: none; }
 #report h4 { margin: 0 0 6px; font: 600 16px 'Barlow Semi Condensed', Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; }
 #report .rd { display: flex; gap: 12px; border: 1px solid #C3CCD5; border-radius: 8px; padding: 10px; }
 #report .rd .no { flex: none; width: 26px; height: 26px; border-radius: 50%; background: #13202B; color: #fff; text-align: center; line-height: 26px; font-size: 12px; }
-#report .rd img { width: 230px; border-radius: 6px; display: block; margin-top: 6px; }
+#report .rd .pg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+#report .rd img { width: 150px; border-radius: 6px; display: block; }
+#report .said { white-space: pre-wrap; border: 1px solid #C3CCD5; border-radius: 6px; padding: 6px 8px; margin-bottom: 4px; }
 #report .two { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; }
 </style>
 </head><body>
@@ -174,7 +186,7 @@ a.btn { display: inline-grid; place-items: center; text-decoration: none; }
 
   <section class="sec" aria-labelledby="h-car">
     <h2 id="h-car"><span class="n">1</span>Автомобиль</h2>
-    <label class="field"><span>Кто осматривает</span>
+    <label class="field" id="employeeField"><span>Кто осматривает *</span>
       <input type="text" id="employee" list="staff" autocomplete="off" placeholder="Имя сотрудника">
       <datalist id="staff"></datalist>
     </label>
@@ -202,7 +214,8 @@ a.btn { display: inline-grid; place-items: center; text-decoration: none; }
 
   <section class="sec" aria-labelledby="h-body">
     <h2 id="h-body"><span class="n">2</span>Осмотр кузова</h2>
-    <p class="hint">Нажмите на деталь, где есть повреждение. Одна деталь может иметь несколько повреждений.</p>
+    <button class="btn primary" id="btnVoice" type="button" style="width:100%">Надиктовать повреждения голосом</button>
+    <p class="hint" style="margin-top:10px">Или нажмите на деталь, где есть повреждение. Одна деталь может иметь несколько повреждений.</p>
     <div class="diagram">
       <div id="diagram"></div>
       <div class="legend"><span><i style="background:var(--s0)"></i>лёгкое</span><span><i style="background:var(--s1)"></i>среднее</span><span><i style="background:var(--s2)"></i>сильное</span></div>
@@ -220,10 +233,20 @@ a.btn { display: inline-grid; place-items: center; text-decoration: none; }
     <div id="checks"></div>
   </section>
 
+  <section class="sec" aria-labelledby="h-td">
+    <h2 id="h-td"><span class="n">4</span>Тест-драйв</h2>
+    <div class="chip-line" id="tdDone"></div>
+    <div id="tdChecks" style="margin-top:10px"></div>
+    <label class="field"><span>Результат тест-драйва</span>
+      <textarea id="tdResult" placeholder="Как едет, шумы, вибрации, ошибки на панели…"></textarea></label>
+    <div id="tdMic"></div>
+  </section>
+
   <section class="sec" aria-labelledby="h-note">
-    <h2 id="h-note"><span class="n">4</span>Заметки</h2>
+    <h2 id="h-note"><span class="n">5</span>Заметки</h2>
     <label class="field"><span>Свободный текст, если нужно</span>
       <textarea id="note" placeholder="Всё, что не вошло в списки выше"></textarea></label>
+    <div id="noteMic"></div>
   </section>
 </main>
 
@@ -271,6 +294,7 @@ a.btn { display: inline-grid; place-items: center; text-decoration: none; }
       }
       throw err('tool_error', 'неизвестная операция');
     },
+    parse: async (text, schema) => call('/api/parse', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, schema }) }),
     attach: async (cardId, name, blob) => {
       const fd = new FormData(); fd.append('cardId', cardId); fd.append('name', name); fd.append('file', blob, name);
       return call('/api/attach', { method: 'POST', body: fd });
@@ -370,7 +394,9 @@ const CHECKS = [
 ];
 const CHECKLABEL = Object.fromEntries(CHECKS.flatMap(([, a]) => a));
 
-const S = { employee: '', vin: '', plate: '', card: null, mileage: '', keys: '', season: '', wear: '', checks: {}, note: '', damages: [], sent: false };
+const TDCHECKS = [['td_engine', 'Двигатель работает ровно'], ['td_gear', 'КПП переключается без проблем'], ['td_brakes', 'Тормоза в порядке'], ['td_steer', 'Руль и подвеска без стуков и увода'], ['td_noise', 'Посторонних шумов нет']];
+const TDLABEL = Object.fromEntries(TDCHECKS);
+const S = { said: [], td: { done: '', checks: {}, result: '' }, employee: '', vin: '', plate: '', card: null, mileage: '', keys: '', season: '', wear: '', checks: {}, note: '', damages: [], sent: false };
 let vinPhoto = null, platePhoto = null;   // {blob, url}
 let cards = null, cardsLoading = null;
 let sample = null, mcp = null, canOCR = false;
@@ -381,7 +407,7 @@ let saveT = 0;
 const save = () => {
   clearTimeout(saveT);
   saveT = setTimeout(() => {
-    store.set(KEY, { ...S, sent: false, damages: S.damages.map((d) => ({ ...d, photo: null })) });
+    store.set(KEY, { ...S, sent: false, damages: S.damages.map((d) => ({ ...d, photos: [] })) });
   }, 250);
 };
 const restore = () => {
@@ -390,7 +416,9 @@ const restore = () => {
   const any = d.damages?.length || d.vin || d.plate || d.card || d.mileage || d.note || Object.keys(d.checks || {}).length;
   if (!any) return false;
   Object.assign(S, d, { sent: false });
-  S.damages = (d.damages || []).map((x) => ({ ...x, id: uid++ }));
+  S.damages = (d.damages || []).map((x) => ({ ...x, photos: [], id: uid++ }));
+  S.said = d.said || [];
+  S.td = { done: '', checks: {}, result: '', ...(d.td || {}) };
   return true;
 };
 
@@ -485,7 +513,7 @@ const renderDamages = () => {
       h('div', { class: 'sub' }, h('span', { class: 'sevdot', style: `background:var(--s${d.sev})` }), `${d.type}, ${SEV[d.sev].toLowerCase()}`),
       d.note ? h('div', { class: 'sub' }, d.note) : null),
     h('button', { class: 'x', type: 'button', 'aria-label': 'Удалить повреждение ' + (i + 1), onclick: () => removeDamage(d.id) }, '×'),
-    d.photo ? h('img', { src: d.photo, alt: 'Фото повреждения ' + (i + 1) }) : null)));
+    h('div', { class: 'dph' }, photoPicker(d.photos, () => save())))));
 };
 const renderKeys = () => {
   chips($('#keys'), KEYS, (k) => k, (k) => k, () => S.keys, (v) => { S.keys = v; renderKeys(); save(); });
@@ -504,6 +532,17 @@ const renderChecks = () => {
       return h('div', { class: 'crow' }, h('span', {}, label), h('div', { class: 'yn' }, mk('y', 'Да', 'y'), mk('n', 'Нет', 'n')));
     }))));
 };
+const renderTd = () => {
+  chips($('#tdDone'), [['y', 'Проведён'], ['n', 'Не проводился']], (x) => x[0], (x) => x[1], () => S.td.done, (v) => { S.td.done = v; renderTd(); save(); });
+  $('#tdChecks').replaceChildren(...TDCHECKS.map(([id, label]) => {
+    const v = S.td.checks[id];
+    const mk = (val, txt, cls) => h('button', { type: 'button', class: cls, 'aria-pressed': String(v === val), onclick: () => {
+      if (S.td.checks[id] === val) delete S.td.checks[id]; else S.td.checks[id] = val;
+      renderTd(); save();
+    } }, txt);
+    return h('div', { class: 'crow' }, h('span', {}, label), h('div', { class: 'yn' }, mk('y', 'Да', 'y'), mk('n', 'Нет', 'n')));
+  }));
+};
 const renderBar = () => {
   $('#sumCar').textContent = S.card ? S.card.name : 'Авто не выбрано';
   $('#sumDmg').textContent = 'Повреждений: ' + S.damages.length;
@@ -520,7 +559,8 @@ const renderCar = () => {
 const renderAll = () => {
   $('#employee').value = S.employee; $('#vin').value = S.vin; $('#plate').value = S.plate;
   $('#mileage').value = S.mileage; $('#note').value = S.note;
-  renderCar(); renderDiagram(); renderDamages(); renderKeys(); renderChecks(); renderBar();
+  $('#tdResult').value = S.td.result;
+  renderCar(); renderDiagram(); renderDamages(); renderKeys(); renderChecks(); renderTd(); renderBar();
 };
 
 /* ---------- Окно снизу ---------- */
@@ -540,32 +580,63 @@ const closeSheet = () => {
 $('#scrim').addEventListener('click', closeSheet);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
 
+const photoPicker = (arr, onChange) => {
+  const box = h('div', { class: 'thumbrow' });
+  const cam = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
+  const gal = h('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true });
+  const draw = () => box.replaceChildren(
+    ...arr.map((u, i) => h('span', { class: 'th' }, h('img', { src: u, alt: 'Фото ' + (i + 1) }),
+      h('button', { class: 'rm', type: 'button', 'aria-label': 'Убрать фото', onclick: () => { arr.splice(i, 1); draw(); if (onChange) onChange(); } }, '×'))),
+    h('button', { class: 'btn small', type: 'button', onclick: () => cam.click() }, arr.length ? 'Снять ещё' : 'Снять фото'),
+    h('button', { class: 'btn small', type: 'button', onclick: () => gal.click() }, 'Из галереи'), cam, gal);
+  const add = async (inp) => {
+    for (const f of [...(inp.files || [])]) { try { arr.push((await shrink(f)).url); } catch { toast('Не удалось открыть фото'); } }
+    inp.value = ''; draw(); if (onChange) onChange();
+  };
+  cam.addEventListener('change', () => add(cam)); gal.addEventListener('change', () => add(gal));
+  draw(); return box;
+};
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const LANGKEY = 'priemka-lang';
+const getLang = () => store.get(LANGKEY) || 'ru-RU';
+const langSel = () => {
+  const sel = h('select', { 'aria-label': 'Язык диктовки' }, h('option', { value: 'ru-RU' }, 'Русский'), h('option', { value: 'de-DE' }, 'Deutsch'));
+  sel.value = getLang(); sel.addEventListener('change', () => store.set(LANGKEY, sel.value)); return sel;
+};
+/* Кнопка диктовки в текстовое поле. Если браузер не умеет, остаётся микрофон на клавиатуре телефона. */
+const micBtn = (ta) => {
+  if (!SR) return null;
+  let rec = null;
+  const b = h('button', { class: 'btn small mic', type: 'button' }, 'Говорить');
+  b.addEventListener('click', () => {
+    if (rec) { try { rec.stop(); } catch {} return; }
+    const base = ta.value.trim();
+    try {
+      rec = new SR(); rec.lang = getLang(); rec.continuous = true; rec.interimResults = false;
+      rec.onresult = (e) => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + ' '; ta.value = (base ? base + ' ' : '') + t.trim(); ta.dispatchEvent(new Event('input')); };
+      rec.onend = () => { rec = null; b.textContent = 'Говорить'; b.classList.remove('rec'); };
+      rec.onerror = (e) => { toast(e.error === 'not-allowed' ? 'Нет доступа к микрофону. Разрешите его в настройках браузера.' : 'Не удалось распознать речь', 4500); };
+      b.textContent = 'Стоп'; b.classList.add('rec'); rec.start();
+    } catch { rec = null; toast('Диктовка недоступна, используйте микрофон на клавиатуре'); }
+  });
+  return b;
+};
 const removeDamage = (id) => { S.damages = S.damages.filter((d) => d.id !== id); renderDiagram(); renderDamages(); renderBar(); save(); };
 
 const openZone = (zid) => {
   const z = ZMAP[zid];
-  let type = '', sev = -1, photo = null;
+  let type = '', sev = -1; const photos = [];
   const typeBox = h('div', { class: 'chip-line' }), sevBox = h('div', { class: 'chip-line' });
   const typeField = h('div', { class: 'field' }, h('span', {}, 'Что повреждено'), typeBox);
   const sevField = h('div', { class: 'field' }, h('span', {}, 'Насколько сильно'), sevBox);
   const msg = h('p', { class: 'err', hidden: true });
   const addBtn = h('button', { class: 'btn primary', type: 'button' }, 'Добавить');
-  const thumb = h('div', { class: 'thumbrow' });
-  const file = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true });
+  const thumb = photoPicker(photos);
   const note = h('input', { type: 'text', id: 'dnote', placeholder: 'Комментарий, необязательно', autocomplete: 'off' });
   const drawChips = () => {
     chips(typeBox, TYPES, (t) => t, (t) => t, () => type, (v) => { type = v; msg.hidden = true; drawChips(); });
     chips(sevBox, SEV, (s, i) => i, (s) => s, () => sev, (v) => { sev = v === '' ? -1 : v; msg.hidden = true; drawChips(); }, (i) => 's' + i);
   };
-  const drawThumb = () => thumb.replaceChildren(...[
-    photo ? h('img', { src: photo, alt: 'Фото' }) : null,
-    h('button', { class: 'btn small', type: 'button', onclick: () => file.click() }, photo ? 'Переснять' : 'Добавить фото')
-  ].filter(Boolean));
-  file.addEventListener('change', async () => {
-    const f = file.files && file.files[0]; if (!f) return;
-    try { photo = (await shrink(f)).url; } catch { toast('Не удалось открыть фото'); }
-    file.value = ''; drawThumb();
-  });
   addBtn.addEventListener('click', () => {
     if (!type || sev < 0) {
       msg.textContent = !type ? 'Выберите, что повреждено.' : 'Выберите, насколько сильно.';
@@ -573,11 +644,11 @@ const openZone = (zid) => {
       (!type ? typeField : sevField).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       return;
     }
-    S.damages.push({ id: uid++, zone: zid, type, sev, note: note.value.trim(), photo });
+    S.damages.push({ id: uid++, zone: zid, type, sev, note: note.value.trim(), photos });
     renderDiagram(); renderDamages(); renderBar(); save(); closeSheet();
     toast('Добавлено: ' + z.label);
   });
-  drawChips(); drawThumb();
+  drawChips();
   const old = S.damages.filter((d) => d.zone === zid);
   openSheet([
     h('h3', { class: 't' }, z.label),
@@ -585,10 +656,89 @@ const openZone = (zid) => {
       h('div', {}, h('div', { class: 'tt' }, d.type), h('div', { class: 'sub' }, SEV[d.sev] + (d.note ? ', ' + d.note : ''))),
       h('button', { class: 'x', type: 'button', 'aria-label': 'Удалить', onclick: () => { removeDamage(d.id); openZone(zid); } }, '×')))) : null,
     typeField, sevField,
-    h('div', { class: 'field' }, h('span', {}, 'Фото'), thumb, file),
+    h('div', { class: 'field' }, h('span', {}, 'Фото (можно несколько)'), thumb),
     h('label', { class: 'field' }, h('span', {}, 'Комментарий'), note)
   ], [msg, h('div', { class: 'acts' }, h('button', { class: 'btn', type: 'button', onclick: closeSheet }, 'Отмена'), addBtn)]);
 };
+const SCHEMA = () => ({ zones: ZONES.map((z) => ({ id: z.id, label: z.label })), types: TYPES, sevs: SEV, tdChecks: TDCHECKS.map(([id, label]) => ({ id, label })) });
+const sel = (opts, cur, on) => { const e = h('select', {}, ...opts.map(([v, t]) => h('option', { value: String(v) }, t))); e.value = String(cur); e.addEventListener('change', () => on(e.value)); return e; };
+const openVoice = () => {
+  const ta = h('textarea', { id: 'vtext', placeholder: 'Нажмите «Говорить» или диктуйте микрофоном на клавиатуре телефона. Можно по-русски или по-немецки. Пример: «на правом переднем крыле лёгкая царапина 5 сантиметров».' });
+  const mic = micBtn(ta);
+  const out = h('div', { style: 'display:grid;gap:10px;margin-top:10px' });
+  const msg = h('p', { class: 'err', hidden: true });
+  const parseBtn = h('button', { class: 'btn primary', type: 'button' }, 'Разобрать');
+  const addBtn = h('button', { class: 'btn primary', type: 'button', hidden: true }, 'Добавить в отчёт');
+  let P = null;
+  const showErr = (t) => { msg.textContent = t; msg.hidden = false; };
+  const draw = () => {
+    if (!P) { out.replaceChildren(); return; }
+    const zOpts = ZONES.map((z) => [z.id, z.label]);
+    const tOpts = [['', 'Что повреждено?'], ...TYPES.map((t) => [t, t])];
+    const sOpts = [['-1', 'Насколько сильно?'], ...SEV.map((t, i) => [i, t])];
+    const nodes = [h('div', {}, h('div', { class: 'lbl' }, 'Продиктовано'), h('div', { class: 'said' }, P.text))];
+    nodes.push(h('div', { class: 'lbl' }, P.items.length ? 'Разобрано: повреждения' : 'Повреждения не найдены'));
+    P.items.forEach((it, i) => nodes.push(h('div', { class: 'pv' },
+      sel(zOpts, it.zone, (v) => { it.zone = v; }),
+      h('div', { class: 'sel2' }, sel(tOpts, it.type, (v) => { it.type = v; }), sel(sOpts, it.sev, (v) => { it.sev = Number(v); })),
+      (() => { const n = h('input', { type: 'text', value: it.note || '', placeholder: 'Подробности' }); n.addEventListener('input', () => { it.note = n.value; }); return n; })(),
+      photoPicker(it.photos),
+      h('button', { class: 'linkbtn', type: 'button', onclick: () => { P.items.splice(i, 1); draw(); } }, 'Убрать это повреждение'))));
+    if (P.td) {
+      const tdc = Object.entries(P.td.checks || {}).filter(([id]) => TDLABEL[id]);
+      nodes.push(h('div', { class: 'lbl' }, 'Разобрано: тест-драйв'));
+      nodes.push(h('div', { class: 'pv' },
+        sel([['', 'Проведён или нет?'], ['y', 'Проведён'], ['n', 'Не проводился']], P.td.done, (v) => { P.td.done = v; }),
+        ...tdc.map(([id, v]) => h('div', {}, (v ? '✓ ' : '✗ ') + TDLABEL[id])),
+        (() => { const n = h('textarea', { placeholder: 'Результат' }); n.value = P.td.result || ''; n.addEventListener('input', () => { P.td.result = n.value; }); return n; })()));
+    }
+    if (P.note !== undefined && P.note !== null) {
+      nodes.push(h('div', { class: 'lbl' }, 'Разобрано: заметка'));
+      nodes.push((() => { const n = h('textarea', {}); n.value = P.note || ''; n.addEventListener('input', () => { P.note = n.value; }); return n; })());
+    }
+    out.replaceChildren(...nodes);
+    addBtn.hidden = false;
+  };
+  parseBtn.addEventListener('click', async () => {
+    const text = ta.value.trim(); msg.hidden = true;
+    if (!text) { showErr('Сначала продиктуйте или напишите текст.'); return; }
+    if (!mcp || !mcp.parse) { showErr('Разбор недоступен: нет связи с сервером.'); return; }
+    parseBtn.disabled = true; parseBtn.textContent = 'Разбираю…';
+    try {
+      const r = await mcp.parse(text, SCHEMA());
+      const items = (Array.isArray(r.damages) ? r.damages : []).filter((d) => d && ZMAP[d.zone]).map((d) => ({
+        zone: d.zone, type: TYPES.includes(d.type) ? d.type : '', sev: Number.isInteger(d.sev) && d.sev >= 0 && d.sev < SEV.length ? d.sev : -1, note: d.note || '', photos: []
+      }));
+      const t = r.testdrive || {};
+      const hasTd = t.done === true || t.done === false || (t.result && String(t.result).trim()) || Object.keys(t.checks || {}).length;
+      const checks = {}; for (const [id, v] of Object.entries(t.checks || {})) if (TDLABEL[id] && typeof v === 'boolean') checks[id] = v;
+      P = { text, items, td: hasTd ? { done: t.done === true ? 'y' : t.done === false ? 'n' : '', checks, result: t.result || '' } : null, note: r.note ? String(r.note) : null };
+      draw();
+    } catch (e) { showErr('Не удалось разобрать: ' + ((e && (e.message || e.code)) || 'ошибка') + '. Можно добавить повреждения нажатием на деталь.'); }
+    finally { parseBtn.disabled = false; parseBtn.textContent = 'Разобрать ещё раз'; }
+  });
+  addBtn.addEventListener('click', () => {
+    if (!P) return;
+    const bad = P.items.find((it) => !it.type || it.sev < 0);
+    if (bad) { showErr('У каждого повреждения выберите, что повреждено и насколько сильно.'); return; }
+    P.items.forEach((it) => S.damages.push({ id: uid++, zone: it.zone, type: it.type, sev: it.sev, note: (it.note || '').trim(), photos: it.photos }));
+    if (P.td) {
+      if (P.td.done) S.td.done = P.td.done;
+      for (const [id, v] of Object.entries(P.td.checks)) S.td.checks[id] = v ? 'y' : 'n';
+      if ((P.td.result || '').trim()) S.td.result = (S.td.result ? S.td.result.trim() + '\n' : '') + P.td.result.trim();
+    }
+    if (P.note && P.note.trim()) S.note = (S.note ? S.note.trim() + '\n' : '') + P.note.trim();
+    S.said.push(P.text);
+    renderAll(); save(); closeSheet(); toast('Добавлено из диктовки');
+  });
+  openSheet([
+    h('h3', { class: 't' }, 'Диктовка'),
+    h('div', { class: 'field' }, h('span', {}, 'Язык'), langSel()),
+    h('div', { class: 'field' }, h('span', {}, 'Текст'), ta, mic ? h('div', { style: 'margin-top:8px' }, mic) : h('p', { class: 'hint' }, 'В этом браузере нет кнопки «Говорить». Используйте микрофон на клавиатуре телефона.')),
+    out
+  ], [msg, h('div', { class: 'acts' }, h('button', { class: 'btn', type: 'button', onclick: closeSheet }, 'Отмена'), parseBtn, addBtn)]);
+};
+$('#btnVoice').addEventListener('click', openVoice);
 $('#diagram').addEventListener('click', (e) => { const p = e.target.closest('[data-zone]'); if (p) openZone(p.dataset.zone); });
 $('#diagram').addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -760,6 +910,7 @@ const tireLine = () => {
   const s = SEASONS.find((x) => x[0] === S.season);
   return [s ? `${s[0]} (${s[1].toLowerCase()})` : '', S.wear].filter(Boolean).join(', ');
 };
+const tdUsed = () => !!(S.td.done || S.td.result.trim() || Object.keys(S.td.checks).length);
 const buildComment = () => {
   const L = [];
   L.push(`**Приёмка автомобиля** · ${fmtDate()}`);
@@ -770,12 +921,20 @@ const buildComment = () => {
   if (S.season || S.wear) L.push(`Reifen: ${tireLine()}`);
   L.push('');
   L.push(S.damages.length ? `**Повреждения (${S.damages.length}):**` : '**Повреждений не отмечено**');
-  S.damages.forEach((d, i) => L.push(`${i + 1}. ${ZMAP[d.zone].label}: ${d.type.toLowerCase()}, ${SEV[d.sev].toLowerCase()}${d.note ? '. ' + d.note : ''}${d.photo ? ' (фото в PDF)' : ''}`));
+  S.damages.forEach((d, i) => L.push(`${i + 1}. ${ZMAP[d.zone].label}: ${d.type.toLowerCase()}, ${SEV[d.sev].toLowerCase()}${d.note ? '. ' + d.note : ''}${d.photos.length ? ` (фото: ${d.photos.length}, в PDF)` : ''}`));
   const yes = [], no = [];
   for (const [id, label] of Object.entries(CHECKLABEL)) { if (S.checks[id] === 'y') yes.push(label); else if (S.checks[id] === 'n') no.push(label); }
   if (no.length) { L.push(''); L.push('**Нет / проблема:**'); no.forEach((x) => L.push('- ' + x)); }
   if (yes.length) { L.push(''); L.push('**В порядке:** ' + yes.join('; ')); }
+  if (tdUsed()) {
+    L.push(''); L.push('**Тест-драйв:** ' + (S.td.done === 'y' ? 'проведён' : S.td.done === 'n' ? 'не проводился' : 'данные ниже'));
+    const tn = TDCHECKS.filter(([id]) => S.td.checks[id] === 'n').map(([, l]) => l), ty = TDCHECKS.filter(([id]) => S.td.checks[id] === 'y').map(([, l]) => l);
+    if (tn.length) L.push('Проблемы: ' + tn.join('; '));
+    if (ty.length) L.push('В порядке: ' + ty.join('; '));
+    if (S.td.result.trim()) L.push('Результат: ' + S.td.result.trim());
+  }
   if (S.note.trim()) { L.push(''); L.push('**Заметки:** ' + S.note.trim()); }
+  if (S.said.length) { L.push(''); L.push('**Продиктовано:**'); S.said.forEach((t) => L.push('> ' + t.replace(/\s*\n\s*/g, ' '))); }
   return L.join('\n');
 };
 const reportBlocks = () => {
@@ -788,10 +947,16 @@ const reportBlocks = () => {
     h('div', { style: 'color:#566472;font-size:12px' }, 'Жёлтый: лёгкое · оранжевый: среднее · красный: сильное')));
   S.damages.forEach((d, i) => B.push(h('div', { class: 'rb' }, h('div', { class: 'rd' }, h('div', { class: 'no' }, String(i + 1)),
     h('div', {}, h('b', {}, ZMAP[d.zone].label), h('div', {}, `${d.type}, ${SEV[d.sev].toLowerCase()}`), d.note ? h('div', { style: 'color:#566472' }, d.note) : null,
-      d.photo ? h('img', { src: d.photo, alt: '' }) : null)))));
+      d.photos.length ? h('div', { class: 'pg' }, ...d.photos.map((u) => h('img', { src: u, alt: '' }))) : null)))));
   const items = Object.entries(CHECKLABEL).map(([id, label]) => { const v = S.checks[id]; return h('div', {}, (v === 'y' ? '✓ ' : v === 'n' ? '✗ ' : '– ') + label); });
   B.push(h('div', { class: 'rb' }, h('h4', {}, 'Состояние и комплект'), h('div', { class: 'two' }, ...items),
     h('div', { style: 'color:#566472;font-size:12px;margin-top:6px' }, '✓ да · ✗ нет · – не проверено')));
+  if (tdUsed()) {
+    const ti = TDCHECKS.map(([id, label]) => { const v = S.td.checks[id]; return h('div', {}, (v === 'y' ? '✓ ' : v === 'n' ? '✗ ' : '– ') + label); });
+    B.push(h('div', { class: 'rb' }, h('h4', {}, 'Тест-драйв: ' + (S.td.done === 'y' ? 'проведён' : S.td.done === 'n' ? 'не проводился' : '—')), h('div', { class: 'two' }, ...ti),
+      S.td.result.trim() ? h('div', { style: 'white-space:pre-wrap;margin-top:6px' }, S.td.result.trim()) : null));
+  }
+  if (S.said.length) B.push(h('div', { class: 'rb' }, h('h4', {}, 'Продиктовано'), ...S.said.map((t) => h('div', { class: 'said' }, t))));
   if (S.note.trim()) B.push(h('div', { class: 'rb' }, h('h4', {}, 'Заметки'), h('div', { style: 'white-space:pre-wrap' }, S.note.trim())));
   return B;
 };
@@ -847,7 +1012,14 @@ const uploadPdf = async () => {
   await mcp.attach(S.card.id, name, blob);
   return name;
 };
+const needEmployee = () => {
+  if (S.employee.trim()) return false;
+  const f = $('#employeeField'); f.classList.add('bad'); toast('Укажите, кто осматривает');
+  f.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => $('#employee').focus(), 350);
+  return true;
+};
 const askSend = () => {
+  if (needEmployee()) return;
   if (!S.card) { toast('Сначала выберите автомобиль'); return; }
   const text = buildComment();
   const errP = h('p', { class: 'err', hidden: true });
@@ -870,7 +1042,7 @@ const askSend = () => {
       errP.hidden = false; go.disabled = false; go.textContent = 'Отправить ещё раз';
     }
   });
-  const photos = S.damages.filter((d) => d.photo).length;
+  const photos = S.damages.reduce((n, d) => n + d.photos.length, 0);
   openSheet([
     h('h3', { class: 't' }, 'Отправить в Trello?'),
     h('div', { class: 'carbox' }, h('div', { class: 'nm' }, S.card.name), h('div', { class: 'meta' }, `Повреждений: ${S.damages.length}` + (S.employee ? ' · ' + S.employee : ''))),
@@ -890,7 +1062,7 @@ const sentView = () => {
   ], [h('div', { class: 'acts' }, h('button', { class: 'btn primary', type: 'button', onclick: () => { resetAll(); closeSheet(); } }, 'Новая приёмка'))]);
 };
 const resetAll = () => {
-  Object.assign(S, { vin: '', plate: '', card: null, mileage: '', keys: '', season: '', wear: '', checks: {}, note: '', damages: [], sent: false });
+  Object.assign(S, { said: [], td: { done: '', checks: {}, result: '' }, vin: '', plate: '', card: null, mileage: '', keys: '', season: '', wear: '', checks: {}, note: '', damages: [], sent: false });
   vinPhoto = platePhoto = null;
   for (const t of ['#tileVin', '#tilePlate']) { const el = $(t); if (el) { el.classList.remove('has'); el.querySelector('img')?.remove(); } }
   $('#btnRead').disabled = true; $('#ocrErr').hidden = true; $('#banners').replaceChildren();
@@ -903,7 +1075,9 @@ bind('#vin', 'vin', (v) => v.toUpperCase().replace(/\s/g, ''));
 bind('#plate', 'plate', (v) => v.toUpperCase().replace(/\s/g, ''));
 bind('#mileage', 'mileage', (v) => v.replace(/[^\d]/g, ''));
 bind('#note', 'note');
-$('#employee').addEventListener('input', (e) => { S.employee = e.target.value; save(); });
+{ const m1 = micBtn($('#tdResult')), m2 = micBtn($('#note')); if (m1) $('#tdMic').append(h('div', { class: 'acts' }, m1, langSel())); if (m2) $('#noteMic').append(h('div', { class: 'acts' }, m2)); }
+$('#employee').addEventListener('input', (e) => { S.employee = e.target.value; if (S.employee.trim()) $('#employeeField').classList.remove('bad'); save(); });
+$('#tdResult').addEventListener('input', (e) => { S.td.result = e.target.value; save(); });
 $('#employee').addEventListener('change', () => {
   const n = S.employee.trim(); if (!n) return;
   const l = store.get(STAFF) || []; if (!l.includes(n)) { l.unshift(n); store.set(STAFF, l.slice(0, 12)); fillStaff(); }
@@ -912,7 +1086,7 @@ const fillStaff = () => { $('#staff').replaceChildren(...(store.get(STAFF) || []
 $('#btnFind').addEventListener('click', () => findCard(false));
 $('#btnPick').addEventListener('click', openPicker);
 $('#btnRead').addEventListener('click', readPhotos);
-$('#btnPdf').addEventListener('click', (e) => savePdf(e.currentTarget));
+$('#btnPdf').addEventListener('click', (e) => { if (needEmployee()) return; savePdf(e.currentTarget); });
 $('#btnSend').addEventListener('click', askSend);
 $('#btnNew').addEventListener('click', () => openSheet([
   h('h3', { class: 't' }, 'Начать новую приёмку?'),
